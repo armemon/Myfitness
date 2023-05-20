@@ -1,23 +1,66 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
+import { auth , AuthContextProvider, useAuthState} from "./firebase";
+import Home from "./components/Home/Home";
+import Login from "./components/Login/Login";
+import Signup from "./components/Signup/Signup";
+
+
+import "./App.css";
+
+const AuthenticatedRoute = ({ component: C, ...props }) => {
+  const { isAuthenticated } = useAuthState()
+  console.log(`AuthenticatedRoute: ${isAuthenticated}`)
+  return (
+    <Route
+      {...props}
+      render={routeProps =>
+        isAuthenticated ? <C {...routeProps} /> : <Navigate to="/login" />
+      }
+    />
+  )
+}
+
+const UnauthenticatedRoute = ({ component: C, ...props }) => {
+  const { isAuthenticated } = useAuthState()
+  console.log(`UnauthenticatedRoute: ${isAuthenticated}`)
+  return (
+    <Route
+      {...props}
+      render={routeProps =>
+        !isAuthenticated ? <C {...routeProps} /> : <Navigate to="/" />
+      }
+    />
+  )
+}
 function App() {
+  const [userName, setUserName] = useState("");
+
+ useEffect(() => {
+    async function fetchUserName() {
+      const user = await auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserName(user.displayName);
+      } else setUserName("");
+      })
+    }
+    fetchUserName();
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <AuthContextProvider>
+      <Router>
+        <Routes>
+          <AuthenticatedRoute path="/" element={<Login />} />
+          <UnauthenticatedRoute path="/signup" element={<Signup />} />
+            <UnauthenticatedRoute path="/home" element={<Home name={userName} />} />
+            </Routes>
+          
+        
+        </Router>
+        </AuthContextProvider>
     </div>
   );
 }
