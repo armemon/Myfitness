@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 import InputControl from "../InputControl/InputControl";
@@ -7,23 +8,30 @@ import { auth } from "../../firebase";
 
 import styles from "./Signup.module.css";
 
-function Signup() {
+function Signup({ onSignup }) {
   const navigate = useNavigate();
+  const [user, loading, error] = useAuthState(auth);
   const [values, setValues] = useState({
     name: "",
     email: "",
     pass: "",
   });
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      navigate("/home");
+    }
+  }, [user, loading]);
   const [errorMsg, setErrorMsg] = useState("");
   const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
 
-  const handleSubmission = () => {
+  const handleSubmission = async() => {
     if (!values.name || !values.email || !values.pass) {
       setErrorMsg("Fill all fields");
       return;
     }
     setErrorMsg("");
-
+    await onSignup(values.name);
     setSubmitButtonDisabled(true);
     createUserWithEmailAndPassword(auth, values.email, values.pass)
       .then(async (res) => {
@@ -43,6 +51,8 @@ function Signup() {
   return (
     <div className={styles.container}>
       <div className={styles.innerBox}>
+      <img src="/myfitness.png" alt="image" className={styles.logo } />
+
         <h1 className={styles.heading}>Signup</h1>
 
         <InputControl

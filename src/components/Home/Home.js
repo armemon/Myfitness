@@ -1,48 +1,41 @@
-import React, { useState } from "react";
-import { getAuth, signOut } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
-
-const auth = getAuth();
+import React, { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../../firebase";
+import CollapsibleExample from "./Navbar";
+import BMI from "../BMI/BMI";
 
 
 
 
 
 function Home(props) {
+  const [user, loading, error] = useAuthState(auth);
   const navigate = useNavigate();
-
-    const [isLoggedIn, setIsLoggedIn] = useState(true);
   
-    const handleLogout = (e) => {
-      e.preventDefault();
-      signOut(auth).then(() => {
-        setIsLoggedIn(false);
-        console.log("User logged out successfully!");
+
+    useEffect(() => {
+      if (loading) return;
+  
+      if (!user) {
         navigate("/");
-      });
-    };
+      } 
+    }, [user, loading, navigate]);
+  
+    if (loading) {
+      return <div>Loading...</div>;
+    }
 
-    return (
+    
+
+  return (
       <div>
+       <CollapsibleExample user={user} {...props} />
         <div>
-          <h1>
-            <Link to="/">Login</Link>
-          </h1>
-          <br />
-          <h1>
-            <Link to="/signup">Signup</Link>
-          </h1>
-          <br />
-          <h1>
-            <Link onClick={handleLogout}>Logout</Link>
-          </h1>
-        </div>
+          <BMI />
+         </div>
 
-        <br />
-        <br />
-        <br />
-
-        <h2>{props.name ? `Welcome - ${props.name}` : "Login please"}</h2>
+        {/* <h2>{props.values.name ? `Welcome - ${props.name}` : user.displayName ? `Welcome - ${user.displayName}` : ""}</h2> */}
       </div>
     );
   }
